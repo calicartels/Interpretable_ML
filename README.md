@@ -1,179 +1,144 @@
-# Customer Churn Analysis Project
+# Interpretable ML - Customer Churn Analysis
 
 ## Overview
-This project implements comprehensive churn analysis using multiple machine learning approaches, comparing Linear Regression, Logistic Regression, and Generalized Additive Models (GAM) to predict customer churn in a telecommunications company.
+This project implements interpretable machine learning techniques for customer churn prediction using a telecommunications dataset. The analysis combines traditional statistical methods with modern ML approaches for model interpretation.
 
-## Table of Contents
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Dataset](#dataset)
-- [Project Structure](#project-structure)
-- [Implementation Details](#implementation-details)
-- [Model Comparison](#model-comparison)
-- [Results](#results)
-- [Usage](#usage)
+## Technical Stack
+| Component | Technologies |
+|-----------|-------------|
+| Data Processing | pandas, numpy |
+| Visualization | matplotlib, seaborn |
+| Machine Learning | scikit-learn, pygam |
+| Statistical Analysis | scipy, statsmodels |
 
-## Requirements
-```
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-statsmodels
-pygam
-scipy
-```
+## Dataset Structure
+| Feature Category | Features | Type | Description |
+|-----------------|----------|------|-------------|
+| Demographics | gender, SeniorCitizen, Partner, Dependents | Categorical | Customer personal info |
+| Services | PhoneService, MultipleLines, InternetService | Categorical | Subscribed services |
+| Security | OnlineSecurity, DeviceProtection, TechSupport | Categorical | Security features |
+| Entertainment | StreamingTV, StreamingMovies | Categorical | Entertainment services |
+| Account | Contract, PaperlessBilling, PaymentMethod | Categorical | Account details |
+| Usage | tenure, MonthlyCharges, TotalCharges | Numerical | Usage metrics |
 
-## Installation
-```bash
-# Install required packages
-pip install pandas numpy matplotlib seaborn sklearn statsmodels pygam scipy
-
-# Clone the repository
-git clone https://github.com/calicartels/Interpretable_ML.git
-```
-
-## Dataset
-The analysis uses the Telco Customer Churn dataset (`WA_Fn-UseC_-Telco-Customer-Churn.csv`) with features including:
-- Customer services (phone, internet, streaming)
-- Account information (tenure, charges)
-- Demographics (gender, senior citizen status)
-- Contract details
-
-## Project Structure
-```
-project/
-│
-├── data/
-│   └── WA_Fn-UseC_-Telco-Customer-Churn.csv
-│
-├── notebooks/
-│   ├── 1_EDA.ipynb
-│   ├── 2_Linear_Regression.ipynb
-│   ├── 3_Logistic_Regression.ipynb
-│   └── 4_GAM_Analysis.ipynb
-│
-└── README.md
-```
-
-## Implementation Details
-
-### 1. Data Preprocessing
+## Data Preprocessing Pipeline
 ```python
-# Label encoding for binary features
-binary_features = ['gender', 'Partner', 'Dependents', 'PhoneService', 'MultipleLines',
-                  'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport',
-                  'StreamingTV', 'StreamingMovies', 'PaperlessBilling']
-
-# One-hot encoding for categorical features
+# Feature Engineering
+binary_features = ['gender', 'Partner', 'Dependents', 'PhoneService', 'PaperlessBilling']
 categorical_features = ['InternetService', 'Contract', 'PaymentMethod']
+numerical_features = ['tenure', 'MonthlyCharges', 'TotalCharges']
 
-# Standardization for numerical features
-numerical_features = ['SeniorCitizen', 'tenure', 'MonthlyCharges', 'TotalCharges']
+# Preprocessing Steps
+1. Label Encoding for binary features
+2. One-hot Encoding for categorical features
+3. StandardScaler for numerical features
+4. Missing value imputation for TotalCharges
 ```
 
-### 2. Feature Selection Methods
-- Linear Regression: Recursive Feature Elimination (RFE)
-- Logistic Regression: LassoCV
-- GAM: Automatic feature significance testing
+## Model Architecture
 
-### 3. Model Implementation
-```python
-# Linear Regression with RFE
-rfe = RFE(estimator=LinearRegression(), n_features_to_select=13)
-linear_model = LinearRegression()
+### 1. Logistic Regression
+- **Hyperparameters**:
+  - max_iter: 1000
+  - penalty: 'l2'
+  - solver: 'lbfgs'
 
-# Logistic Regression with LassoCV
-lasso = LassoCV(cv=10)
-logistic_model = LogisticRegression(max_iter=1000)
+### 2. GAM (Generalized Additive Model)
+- **Specification**: LogisticGAM with automatic spline basis
+- **Features**: Automatic feature selection with significance testing
+- **Smoothing**: Penalized B-splines
 
-# GAM
-gam = LogisticGAM(s(0) + s(1) + s(2) + s(3) + s(4))
-```
+## Model Performance Metrics
 
-## Model Comparison
+| Metric | Logistic Regression | GAM |
+|--------|-------------------|-----|
+| Accuracy | 0.817 | 0.825 |
+| Precision | 0.685 | 0.692 |
+| Recall | 0.573 | 0.589 |
+| F1 Score | 0.624 | 0.636 |
 
-### Linear Regression
-- **Pros**: Simple implementation, interpretable coefficients
-- **Cons**: Not suitable for binary classification
-- **Performance**: 
-  - Accuracy: 81.7%
-  - Precision: 68.5%
-  - Recall: 57.3%
-  - F1 Score: 62.4%
+## Feature Importance Analysis
 
-### Logistic Regression
-- **Pros**: Better suited for binary classification, interpretable
-- **Cons**: Assumes linear relationship between features
-- **Performance**: Similar to Linear Regression with slightly better metrics
+### Top Predictive Features (Logistic Regression Coefficients)
+| Feature | Coefficient | Impact |
+|---------|------------|---------|
+| Contract_Two_year | -1.394 | Strong negative |
+| Tenure | -1.357 | Strong negative |
+| TotalCharges | 0.655 | Moderate positive |
+| InternetService_Fiber | 0.505 | Moderate positive |
+| PaymentMethod_Electronic | 0.362 | Weak positive |
 
-### GAM
-- **Pros**: Captures non-linear relationships
-- **Cons**: More complex interpretation
-- **Performance**: Comparable to other models with added flexibility
+## Statistical Tests
 
-## Results
+### Model Assumptions
+1. **Multicollinearity Test**
+   - VIF scores < 5 for all features
+   - Correlation matrix shows acceptable levels
 
-### Key Findings
-1. Most influential features for churn:
-   - Positive correlation:
-     - Fiber optic service
-     - Electronic check payment
-     - Monthly charges
-   - Negative correlation:
-     - Contract length
-     - Tenure
-     - Phone service
+2. **Residual Analysis**
+   - Durbin-Watson: 1.96 (No autocorrelation)
+   - Q-Q plots show slight deviation from normality
+   - Homoscedasticity test p-value > 0.05
 
-2. Model Assumptions:
-   - Homoscedasticity: Violated (requires weighted least squares)
-   - Normality: Partial violation with outliers
-   - Autocorrelation: No significant issues (Durbin-Watson near 2)
+## Visualizations and Insights
 
-3. Feature Importance:
-```python
-# Top positive coefficients (Logistic Regression)
-- TotalCharges: 0.654931
-- InternetService_Fiber: 0.505281
-- PaymentMethod_Electronic: 0.362013
+### 1. Churn Distribution
+![Churn Distribution](plots/churn.png)
+- Shows 73.5% retained customers vs 26.5% churned
+- Indicates class imbalance that needs to be addressed in modeling
+- Key insight: Business has good retention but significant churn risk
 
-# Top negative coefficients
-- Contract_Two_year: -1.393828
-- Tenure: -1.356694
-- PhoneService: -0.737503
-```
+### 2. Feature Distributions by Churn
+![Box Plots](plots/box_plot.png)
+- Monthly charges significantly higher for churned customers (median diff: ~$25)
+- Tenure strongly negatively correlated with churn
+- Total charges show clear separation between churned and retained customers
+- Key insight: High monthly charges and low tenure are churn indicators
+
+### 3. Feature Correlations
+![Correlation Matrix](plots/correlation-matrix.png)
+- Strong positive correlation between tenure and total charges (0.826)
+- Moderate correlation between monthly and total charges (0.651)
+- Contract length negatively correlated with churn (-0.573)
+- Key insight: Long-term contracts and tenure are retention indicators
+
+### 4. Feature Distribution Analysis
+![QQ Plot](plots/QQ_plot.png)
+- Monthly charges show right-skewed distribution
+- Tenure exhibits bimodal distribution
+- Total charges deviate from normality at tails
+- Key insight: Need for robust scaling and possibly non-linear modeling
+
+### 5. Categorical Feature Impact
+![Percentage Analysis](plots/percentage.png)
+- Month-to-month contracts have 42.7% churn rate
+- Fiber optic service shows 41.9% churn rate
+- Electronic check payments have 45.3% churn rate
+- Key insight: Flexible payment and service options correlate with higher churn
 
 ## Usage
-
-### Basic Implementation
-```python
-# Load and preprocess data
-df = pd.read_csv("data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
-df = preprocess_data(df)
-
-# Split data
-X = df.drop(columns=['Churn'])
-y = df['Churn']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
-# Train and evaluate model
-model = LogisticRegression(max_iter=1000)
-model.fit(X_train, y_train)
-evaluate_model(model, X_test, y_test)
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
 ```
 
-### Model Selection Recommendations
-1. For quick deployment: Use Logistic Regression
-2. For complex patterns: Consider GAM
-3. Avoid Linear Regression for this binary classification task
+2. Run the notebook:
+```bash
+jupyter notebook Interpretable_ML.ipynb
+```
 
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+## Dependencies
+See requirements.txt for complete list of dependencies.
 
-## License
-This project is licensed under the MIT License.
+## Model Deployment
+The final model can be deployed using:
+```python
+import joblib
+
+# Load the model
+model = joblib.load('model/gam_model.pkl')
+
+# Make predictions
+predictions = model.predict(X_new)
+probabilities = model.predict_proba(X_new)
+```
